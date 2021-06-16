@@ -1,174 +1,118 @@
 cmake_minimum_required(VERSION 3.20)
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../version.txt" RAW_VERSION)
-string(STRIP "${RAW_VERSION}" VERSION)
-project("exqudens-cpp-eval-conan-messages-lib" VERSION "${VERSION}")
+project("${CMAKE_PROJECT_NAME}-lib" VERSION "${CMAKE_PROJECT_VERSION}")
 
 message("project: '${PROJECT_NAME}-${PROJECT_VERSION}'")
 
-if(${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/cmake-install" CACHE PATH "..." FORCE)
-endif()
-
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS FALSE)
-#set(CMAKE_CXX_VISIBILITY_PRESET "hidden")
-#set(CMAKE_VISIBILITY_INLINES_HIDDEN "YES")
-if("${BUILD_SHARED_LIBS}")
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-    #set(CMAKE_CXX_VISIBILITY_PRESET "default")
-    #set(CMAKE_VISIBILITY_INLINES_HIDDEN "NO")
-endif()
-
-set(CMAKE_OBJECT_PATH_MAX 1000)
-set(CMAKE_SHARED_LIBRARY_PREFIX "")
-set(CMAKE_SHARED_MODULE_PREFIX "")
-set(CMAKE_STATIC_LIBRARY_PREFIX "")
-set(CMAKE_IMPORT_LIBRARY_PREFIX "")
-set(CMAKE_STAGING_PREFIX "")
-set(CMAKE_FIND_LIBRARY_PREFIXES "")
-set(CMAKE_CXX_STANDARD 20)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY                "${CMAKE_CURRENT_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY                "${PROJECT_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL     "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG          "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY                "${CMAKE_CURRENT_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY                "${PROJECT_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE        "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL     "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG          "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY                "${CMAKE_CURRENT_BINARY_DIR}/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY                "${PROJECT_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE        "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL     "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG          "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-if(DEFINED CONAN_PROGRAM)
-    if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
-        set(CONAN_SETTINGS --settings "os=${CMAKE_SYSTEM_NAME}")
-    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-        set(CONAN_SETTINGS --settings "os=${CMAKE_SYSTEM_NAME}")
-    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-        set(CONAN_SETTINGS --settings "os=Macos")
-    else()
-        message(FATAL_ERROR "Unsupported CMAKE_SYSTEM_NAME: '${CMAKE_SYSTEM_NAME}'")
-    endif()
+set(CMAKE_MODULE_PATH "")
+set(CMAKE_PREFIX_PATH "")
+set(CONAN_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/conan-install")
+set("${PROJECT_NAME}_CMAKE_INSTALL_PREFIX" "${PROJECT_BINARY_DIR}/cmake-install")
 
-    if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64")
-        set(CONAN_SETTINGS ${CONAN_SETTINGS} --settings "arch=x86_64")
-    else()
-        message(FATAL_ERROR "Unsupported CMAKE_SYSTEM_PROCESSOR: '${CMAKE_SYSTEM_PROCESSOR}'")
-    endif()
-
-    if(
-        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC"
-        AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL "19"
-    )
-        set(CONAN_SETTINGS ${CONAN_SETTINGS} --settings "compiler=Visual Studio")
-        set(CONAN_SETTINGS ${CONAN_SETTINGS} --settings "compiler.version=16")
-    elseif(
-        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"
-        AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL "10"
-    )
-        set(CONAN_SETTINGS ${CONAN_SETTINGS} --settings "compiler=gcc")
-        set(CONAN_SETTINGS ${CONAN_SETTINGS} --settings "compiler.version=10")
-        set(CONAN_SETTINGS ${CONAN_SETTINGS} --settings "compiler.libcxx=libstdc++11")
-    else()
-        message(FATAL_ERROR "Unsupported CMAKE_CXX_COMPILER_ID: '${CMAKE_CXX_COMPILER_ID}' and CMAKE_CONAN_SETTINGS_COMPILER_VERSION: '${CMAKE_CONAN_SETTINGS_COMPILER_VERSION}'")
-    endif()
-
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        set(CONAN_SETTINGS ${CONAN_SETTINGS} --settings "build_type=Release")
-    else()
-        message(FATAL_ERROR "Unsupported CMAKE_BUILD_TYPE: '${CMAKE_BUILD_TYPE}'")
-    endif()
-
-    if("${BUILD_SHARED_LIBS}")
-        set(CONAN_OPTIONS_SHARED "True")
-    else()
-        set(CONAN_OPTIONS_SHARED "False")
-    endif()
-
-    set(CONAN_OPTIONS
-        --options "exqudens-cpp-eval-conan-strings-lib:shared=${CONAN_OPTIONS_SHARED}"
-        --options "shared=${CONAN_OPTIONS_SHARED}"
+if(DEFINED "CONAN_COMMAND")
+    set(CONAN_PACKAGE_NAMES
+        "exqudens-cpp-eval-conan-strings-lib"
     )
 
-    if(NOT DEFINED CONAN_INSTALLED)
-        set(CONAN_INSTALLED "${CMAKE_CURRENT_BINARY_DIR}/conan-installed")
-    endif()
-
-    if(NOT EXISTS "${CONAN_INSTALLED}")
-        execute_process(
-            COMMAND "${CONAN_PROGRAM}"
-            install
-            "${CMAKE_CURRENT_SOURCE_DIR}"
-            --install-folder
-            "${CONAN_INSTALLED}"
-            ${CONAN_SETTINGS}
-            ${CONAN_OPTIONS}
-            COMMAND_ERROR_IS_FATAL ANY
-        )
-    endif()
-
-    file(
-        GLOB CONAN_INSTALLED_PACKAGES
-        LIST_DIRECTORIES "true"
-        RELATIVE "${CONAN_INSTALLED}"
-        "${CONAN_INSTALLED}/*"
+    set_conan_settings(CONAN_SETTINGS
+        "${CMAKE_SYSTEM_NAME}"
+        "${CMAKE_SYSTEM_PROCESSOR}"
+        "${CMAKE_CXX_COMPILER_ID}"
+        "${CMAKE_CXX_COMPILER_VERSION}"
+        "${CMAKE_MSVC_RUNTIME_LIBRARY}"
+        "${CMAKE_CXX_STANDARD}"
+        "${CMAKE_BUILD_TYPE}"
     )
-    foreach(package ${CONAN_INSTALLED_PACKAGES})
-        if(IS_DIRECTORY "${CONAN_INSTALLED}/${package}")
-            if(NOT DEFINED "CMAKE_PREFIX_PATH")
-                set("CMAKE_PREFIX_PATH" "${CONAN_INSTALLED}/${package}")
-            else()
-                set("CMAKE_PREFIX_PATH" "${CONAN_INSTALLED}/${package}" "${CMAKE_PREFIX_PATH}")
+
+    set_conan_options(CONAN_OPTIONS
+        "${BUILD_SHARED_LIBS}"
+        "exqudens-cpp-eval-conan-strings-lib"
+    )
+
+    conan_install(
+        "${CONAN_COMMAND}"
+        "${PROJECT_SOURCE_DIR}/conanfile.py"
+        "${CONAN_INSTALL_PREFIX}"
+        "${CONAN_SETTINGS}"
+        "${CONAN_OPTIONS}"
+    )
+
+    if(EXISTS "${CONAN_INSTALL_PREFIX}/conan_paths.cmake")
+        set(CMAKE_MODULE_PATH "")
+        set(CMAKE_PREFIX_PATH "")
+        include("${CONAN_INSTALL_PREFIX}/conan_paths.cmake")
+        set(CMAKE_MODULE_PATH "")
+        set(CMAKE_PREFIX_PATH "")
+        foreach(packageName ${CONAN_PACKAGE_NAMES})
+            string(TOUPPER "${packageName}" packageNameUpper)
+            if(DEFINED "CONAN_${packageNameUpper}_ROOT" AND IS_DIRECTORY "${CONAN_${packageNameUpper}_ROOT}")
+                list(APPEND CMAKE_PREFIX_PATH "${CONAN_${packageNameUpper}_ROOT}")
             endif()
-        endif()
-    endforeach()
+        endforeach()
+    endif()
 
-    add_custom_target("${PROJECT_NAME}-conan-install-clean"
-        COMMAND "${CMAKE_COMMAND}" -E rm -rf "${CONAN_INSTALLED}"
-        COMMENT "execute: '${PROJECT_NAME}-conan-install-clean'"
-        VERBATIM
+    add_custom_target_conan_export_user_channel("${PROJECT_NAME}-conan-export-testing"
+        "${CONAN_COMMAND}"
+        "${PROJECT_SOURCE_DIR}/conanfile.py"
+        "test-user"
+        "test-channel"
+        "${${PROJECT_NAME}_CMAKE_INSTALL_PREFIX}"
+        "${CONAN_SETTINGS}"
+        "${CONAN_OPTIONS}"
     )
 
-    add_custom_target("${PROJECT_NAME}-conan-export-testing"
-        COMMAND "${CONAN_PROGRAM}"
-                export-pkg
-                -f
-                "${CMAKE_CURRENT_SOURCE_DIR}"
-                test-user/test-channel
-                --package-folder
-                "${CMAKE_INSTALL_PREFIX}"
-                ${CONAN_SETTINGS}
-                ${CONAN_OPTIONS}
-        COMMENT "execute: '${PROJECT_NAME}-conan-export-testing'"
-        VERBATIM
+    add_custom_target_conan_export_user_channel_clean("${PROJECT_NAME}-conan-export-testing-clean"
+        "${CONAN_COMMAND}"
+        "${PROJECT_NAME}"
+        "${PROJECT_VERSION}"
+        "test-user"
+        "test-channel"
     )
 
-    add_custom_target("${PROJECT_NAME}-conan-export"
-        COMMAND "${CONAN_PROGRAM}"
-                export-pkg
-                "${CMAKE_CURRENT_SOURCE_DIR}"
-                --package-folder
-                "${CMAKE_INSTALL_PREFIX}"
-                ${CONAN_SETTINGS}
-                ${CONAN_OPTIONS}
-        COMMENT "execute: '${PROJECT_NAME}-conan-export'"
-        VERBATIM
+    add_custom_target_conan_export("${PROJECT_NAME}-conan-export"
+        "${CONAN_COMMAND}"
+        "${PROJECT_SOURCE_DIR}/conanfile.py"
+        "${${PROJECT_NAME}_CMAKE_INSTALL_PREFIX}"
+        "${CONAN_SETTINGS}"
+        "${CONAN_OPTIONS}"
     )
 endif()
 
-find_package("exqudens-cpp-eval-conan-strings-lib" "1.0.0" REQUIRED)
+find_package("exqudens-cpp-eval-conan-strings-lib" "1.0.0" QUIET CONFIG)
+
+set_not_found_package_names(NOT_FOUND_PACKAGE_NAMES
+    ${CONAN_PACKAGE_NAMES}
+)
+
+if(NOT "" STREQUAL "${NOT_FOUND_PACKAGE_NAMES}")
+    foreach(package ${NOT_FOUND_PACKAGE_NAMES})
+        message(WARNING "${package}_FOUND: '${${package}_FOUND}'")
+    endforeach()
+    return()
+endif()
 
 add_library("${PROJECT_NAME}"
     "src/main/cpp/exqudens/evaluation/Messages.hpp"
     "src/main/cpp/exqudens/evaluation/Messages.cpp"
 )
-target_include_directories("${PROJECT_NAME}" PRIVATE
+target_include_directories("${PROJECT_NAME}" PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp>"
     "$<INSTALL_INTERFACE:include>"
 )
@@ -223,22 +167,7 @@ install(
 )
 
 add_custom_target("${PROJECT_NAME}-cmake-install"
-    COMMAND "${CMAKE_COMMAND}" --install "${CMAKE_CURRENT_BINARY_DIR}" --prefix "${CMAKE_INSTALL_PREFIX}"
+    COMMAND "${CMAKE_COMMAND}" --install "${CMAKE_CURRENT_BINARY_DIR}" --prefix "${${PROJECT_NAME}_CMAKE_INSTALL_PREFIX}"
     COMMENT "execute: '${PROJECT_NAME}-cmake-install'"
     VERBATIM
 )
-
-add_custom_target("${PROJECT_NAME}-cmake-install-clean"
-    COMMAND "${CMAKE_COMMAND}" -E rm -rf "${CMAKE_INSTALL_PREFIX}"
-    COMMENT "execute: '${PROJECT_NAME}-cmake-install-clean'"
-    VERBATIM
-)
-
-add_custom_target("${PROJECT_NAME}-cmake-clean"
-    COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_CURRENT_BINARY_DIR}" --target clean
-    COMMENT "execute: '${PROJECT_NAME}-cmake-clean'"
-    VERBATIM
-)
-
-add_dependencies("${PROJECT_NAME}-cmake-clean"   "${PROJECT_NAME}-cmake-install-clean")
-add_dependencies("${PROJECT_NAME}-cmake-install" "${PROJECT_NAME}")

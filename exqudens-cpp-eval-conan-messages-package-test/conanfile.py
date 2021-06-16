@@ -2,9 +2,17 @@ from conans import ConanFile, tools
 from os import path
 
 
+def get_name():
+    return path.basename(path.dirname(path.dirname(path.abspath(__file__)))) + "-lib"
+
+
+def get_version():
+    return tools.load(path.join(path.dirname(path.dirname(path.abspath(__file__))), "version.txt")).strip()
+
+
 class ConanConfiguration(ConanFile):
     requires = [
-        "exqudens-cpp-eval-conan-strings-lib/1.0.0"
+        get_name() + "/" + get_version() + "@test-user/test-channel"
     ]
     settings = "arch", "os", "compiler", "build_type"
     options = {"shared": [True, False]}
@@ -13,18 +21,6 @@ class ConanConfiguration(ConanFile):
     def imports(self):
         self.copy(pattern="*.dll", dst="bin", src="bin")
         self.copy(pattern="*.dylib", dst="lib", src="lib")
-
-    def set_name(self):
-        self.name = path.basename(path.dirname(path.abspath(__file__)))
-
-    def set_version(self):
-        self.version = tools.load(path.join(path.dirname(path.dirname(path.abspath(__file__))), "version.txt")).strip()
-
-    def package(self):
-        self.copy("*")
-
-    def package_info(self):
-        self.cpp_info.libs = tools.collect_libs(self)
 
 
 if __name__ == "__main__":
